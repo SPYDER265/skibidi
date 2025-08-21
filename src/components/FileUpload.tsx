@@ -115,18 +115,18 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
   }, [handleFile]);
 
   return (
-    <div className="p-4 sm:p-8">
+    <div className="p-3 sm:p-8">
       <div className="text-center mb-8">
         <h2 className="text-2xl sm:text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           Upload Your Data
         </h2>
-        <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto px-4">
+        <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto px-2 sm:px-4">
           Drag and drop your files or click to browse. We support multiple formats including CSV, Excel, JSON, and images for OCR analysis.
         </p>
       </div>
       
       <div
-        className={`relative border-2 border-dashed rounded-2xl p-8 sm:p-16 text-center transition-all duration-500 overflow-hidden ${
+        className={`relative border-2 border-dashed rounded-2xl p-6 sm:p-16 text-center transition-all duration-500 overflow-hidden ${
           dragActive 
             ? 'border-primary bg-gradient-to-br from-primary/20 to-accent/10 scale-105 glow-effect' 
             : 'border-border/30 hover:border-primary/50 hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5'
@@ -151,7 +151,7 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
             <h3 className="text-xl sm:text-2xl font-semibold">
               {dragActive ? 'Release to upload!' : 'Drop your data files here'}
             </h3>
-            <p className="text-muted-foreground text-base sm:text-lg">
+            <p className="text-muted-foreground text-sm sm:text-lg px-2">
               {dragActive 
                 ? 'Let go to start processing your file' 
                 : 'Support for CSV, Excel, JSON, and image files with OCR'
@@ -159,7 +159,7 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 max-w-lg w-full">
+          <div className="grid grid-cols-3 gap-2 sm:gap-6 max-w-lg w-full">
             <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
               <FileText className="h-8 w-8 text-primary" />
               <span className="text-xs sm:text-sm font-medium">CSV/Excel</span>
@@ -168,7 +168,7 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
               <BarChart3 className="h-8 w-8 text-accent" />
               <span className="text-xs sm:text-sm font-medium">JSON</span>
             </div>
-            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-chart-secondary/10 to-chart-secondary/5 border border-chart-secondary/20 sm:col-span-1 col-span-2 sm:col-span-1">
+            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-chart-secondary/10 to-chart-secondary/5 border border-chart-secondary/20">
               <Image className="h-8 w-8 text-chart-secondary" />
               <span className="text-xs sm:text-sm font-medium">Images + OCR</span>
             </div>
@@ -177,9 +177,9 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-md">
             <Button 
               variant="analytics" 
-              size="lg" 
+              size="default" 
               disabled={isProcessing}
-              className={`transition-all duration-300 w-full sm:w-auto ${isProcessing ? 'animate-pulse' : 'hover:scale-105'}`}
+              className={`transition-all duration-300 w-full sm:w-auto h-11 ${isProcessing ? 'animate-pulse' : 'hover:scale-105'}`}
               onClick={() => document.getElementById('file-upload')?.click()}
             >
               {isProcessing ? (
@@ -194,7 +194,7 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
                 </>
               )}
             </Button>
-            <Button variant="glass" size="lg" className="hover:scale-105 transition-transform w-full sm:w-auto">
+            <Button variant="glass" size="default" className="hover:scale-105 transition-transform w-full sm:w-auto h-11">
               <span className="mr-2">👁️</span>
               View Samples
             </Button>

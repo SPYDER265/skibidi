@@ -1,307 +1,263 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BarChart3, Brain, FileText, Zap, Sparkles, TrendingUp } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileUpload } from '@/components/FileUpload';
-import { DataTable } from '@/components/DataTable';
-import { AIChat } from '@/components/AIChat';
-import { ImageOCR } from '@/components/ImageOCR';
-import { DataCleaning } from '@/components/DataCleaning';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { CheckCircle, AlertTriangle, Trash2, Sparkles } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-const Index = () => {
-  const navigate = useNavigate();
-  const [currentData, setCurrentData] = useState<any[]>([]);
-  const [currentFilename, setCurrentFilename] = useState<string>('');
-  const [currentFileType, setCurrentFileType] = useState<string>('');
-  const [currentImage, setCurrentImage] = useState<File | null>(null);
-  const [activeTab, setActiveTab] = useState('upload');
+interface DataCleaningProps {
+  data: any[];
+  onDataCleaned: (cleanedData: any[]) => void;
+}
 
-  const handleDataLoad = (data: any[], filename: string, type: string) => {
-    setCurrentData(data);
-    setCurrentFilename(filename);
-    setCurrentFileType(type);
-    setActiveTab('data');
+export const DataCleaning = ({ data, onDataCleaned }: DataCleaningProps) => {
+  const [cleaningOptions, setCleaningOptions] = useState({
+    removeEmptyRows: true,
+    trimWhitespace: true,
+    removeSpecialChars: false,
+    standardizeText: true,
+    removeDuplicates: true,
+    handleMissingValues: true
+  });
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [cleaningStats, setCleaningStats] = useState<any>(null);
+  const { toast } = useToast();
+
+  const analyzeDataQuality = () => {
+    setIsAnalyzing(true);
+    
+    setTimeout(() => {
+      const stats = {
+        totalRows: data.length,
+        emptyRows: data.filter(row => Object.values(row).every(val => !val || String(val).trim() === '')).length,
+        duplicateRows: data.length - new Set(data.map(row => JSON.stringify(row))).size,
+        whitespaceIssues: data.reduce((count, row) => 
+          count + Object.values(row).filter(val => 
+            typeof val === 'string' && (val.startsWith(' ') || val.endsWith(' '))
+          ).length, 0
+        ),
+        missingValues: data.reduce((count, row) => 
+          count + Object.values(row).filter(val => val === null || val === undefined || val === '').length, 0
+        )
+      };
+      
+      setCleaningStats(stats);
+      setIsAnalyzing(false);
+    }, 1500);
   };
 
-  const handleImageLoad = (file: File) => {
-    setCurrentImage(file);
-    setActiveTab('ocr');
-  };
+  const cleanData = () => {
+    let cleaned = [...data];
+    let changes = 0;
+    let operationsPerformed = [];
 
-  const handleTextExtracted = (text: string, data: any[]) => {
-    if (data.length > 0) {
-      setCurrentData(data);
-      setCurrentFilename(`${currentImage?.name || 'image'}_extracted_data`);
-      setCurrentFileType('ocr');
-      setActiveTab('data');
+    if (cleaningOptions.removeEmptyRows) {
+      const before = cleaned.length;
+      cleaned = cleaned.filter(row => 
+        !Object.values(row).every(val => !val || String(val).trim() === '')
+      );
+      const removed = before - cleaned.length;
+      changes += removed;
+      if (removed > 0) operationsPerformed.push(`Removed ${removed} empty rows`);
     }
-  };
 
-  const handleDataCleaned = (cleanedData: any[]) => {
-    setCurrentData(cleanedData);
-    setActiveTab('data');
-  };
+    if (cleaningOptions.removeDuplicates) {
+      const before = cleaned.length;
+      const seen = new Set();
+      cleaned = cleaned.filter(row => {
+        const key = JSON.stringify(row);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      const removed = before - cleaned.length;
+      changes += removed;
+      if (removed > 0) operationsPerformed.push(`Removed ${removed} duplicate rows`);
+    }
 
-  const navigateToVisualizations = () => {
-    navigate('/visualizations', { 
-      state: { 
-        data: currentData, 
-        filename: currentFilename 
-      } 
+    if (cleaningOptions.trimWhitespace || cleaningOptions.standardizeText || cleaningOptions.removeSpecialChars) {
+      let cellsModified = 0;
+      cleaned = cleaned.map(row => {
+        const newRow = { ...row };
+        Object.keys(newRow).forEach(key => {
+          if (typeof newRow[key] === 'string') {
+            const originalValue = newRow[key];
+            
+            if (cleaningOptions.trimWhitespace) {
+              newRow[key] = newRow[key].trim();
+            }
+            
+            if (cleaningOptions.standardizeText) {
+              newRow[key] = newRow[key].replace(/\s+/g, ' ');
+            }
+            
+            if (cleaningOptions.removeSpecialChars) {
+              // Essential characters to preserve: letters, numbers, spaces, commas, periods, @, hyphens, underscores
+              // Remove special characters but preserve essential ones
+              let cleanedValue = newRow[key].replace(/[^\w\s,.\-@]/g, '');
+              
+              // Remove duplicate essential characters (but keep at least one)
+              // Remove duplicate spaces
+              cleanedValue = cleanedValue.replace(/\s{2,}/g, ' ');
+              // Remove duplicate commas
+              cleanedValue = cleanedValue.replace(/,{2,}/g, ',');
+              // Remove duplicate periods
+              cleanedValue = cleanedValue.replace(/\.{2,}/g, '.');
+              // Remove duplicate @ symbols
+              cleanedValue = cleanedValue.replace(/@{2,}/g, '@');
+              // Remove duplicate hyphens
+              cleanedValue = cleanedValue.replace(/-{2,}/g, '-');
+              // Remove duplicate underscores
+              cleanedValue = cleanedValue.replace(/_{2,}/g, '_');
+              
+              newRow[key] = cleanedValue;
+            }
+            
+            if (originalValue !== newRow[key]) {
+              cellsModified++;
+            }
+          }
+        });
+        return newRow;
+      });
+      
+      if (cleaningOptions.trimWhitespace && cellsModified > 0) {
+        operationsPerformed.push(`Trimmed whitespace in ${cellsModified} cells`);
+      }
+      if (cleaningOptions.standardizeText && cellsModified > 0) {
+        operationsPerformed.push(`Standardized text spacing`);
+      }
+      if (cleaningOptions.removeSpecialChars && cellsModified > 0) {
+        operationsPerformed.push(`Cleaned special characters in ${cellsModified} cells`);
+      }
+    }
+
+    if (cleaningOptions.handleMissingValues) {
+      let missingValuesHandled = 0;
+      cleaned = cleaned.map(row => {
+        const newRow = { ...row };
+        Object.keys(newRow).forEach(key => {
+          if (newRow[key] === null || newRow[key] === undefined || newRow[key] === '') {
+            newRow[key] = 'N/A';
+            missingValuesHandled++;
+          }
+        });
+        return newRow;
+      });
+      if (missingValuesHandled > 0) {
+        operationsPerformed.push(`Handled ${missingValuesHandled} missing values`);
+      }
+    }
+
+    onDataCleaned(cleaned);
+    toast({
+      title: "Data Cleaned Successfully!",
+      description: operationsPerformed.length > 0 
+        ? operationsPerformed.join('. ') + '.'
+        : `Processed ${data.length} rows with selected cleaning options.`,
     });
   };
 
   return (
-    <div className="min-h-screen hero-gradient">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-chart-primary/20 via-transparent to-chart-secondary/20"></div>
-        
-        {/* Floating background elements */}
-        <div className="absolute top-20 left-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl opacity-50 animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute top-40 right-16 w-24 h-24 bg-accent/10 rounded-full blur-2xl opacity-50 animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
-        <div className="absolute bottom-20 left-1/3 w-20 h-20 bg-chart-secondary/10 rounded-full blur-2xl opacity-50 animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
-        
-        <div className="relative container mx-auto px-6 py-24">
-          <div className="text-center space-y-8 max-w-5xl mx-auto stagger-animation">
-            <div className="flex flex-col items-center gap-6 mb-8">
-              <div className="p-4 rounded-full bg-gradient-to-r from-chart-primary to-chart-secondary pulse-glow animate-float">
-                <Brain className="h-12 w-12 text-primary-foreground" />
-              </div>
-              <div className="space-y-2">
-                <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-chart-primary via-accent to-chart-secondary bg-clip-text text-transparent">
-                  DataMind AI
-                </h1>
-                <div className="w-32 h-1 bg-gradient-to-r from-chart-primary to-accent mx-auto rounded-full" />
-              </div>
+    <div className="space-y-6">
+      <Card className="floating-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3">
+            <Sparkles className="h-6 w-6 text-chart-primary" />
+            Data Quality Analysis
+          </CardTitle>
+          <CardDescription>
+            Analyze and clean your dataset to improve data quality
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {!cleaningStats && (
+            <div className="text-center py-8">
+              <Button 
+                onClick={analyzeDataQuality} 
+                disabled={isAnalyzing}
+                className="bg-gradient-to-r from-chart-primary to-chart-secondary hover:opacity-90"
+              >
+                {isAnalyzing ? 'Analyzing...' : 'Analyze Data Quality'}
+              </Button>
+              {isAnalyzing && (
+                <div className="mt-4 space-y-2">
+                  <Progress value={66} className="w-full" />
+                  <p className="text-sm text-muted-foreground">Scanning for data quality issues...</p>
+                </div>
+              )}
             </div>
-            
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Intelligent data analytics platform with AI-powered insights. Clean, analyze, and visualize your data with advanced OCR and machine learning capabilities.
-            </p>
+          )}
 
-            <div className="flex flex-wrap gap-4 justify-center mt-12">
-              <div className="flex items-center gap-3 text-sm glass-card px-6 py-3 rounded-full hover:scale-105 transition-transform animate-slide-up">
-                <FileText className="h-5 w-5 text-chart-primary" />
-                <span className="font-medium">Excel, CSV, JSON</span>
+          {cleaningStats && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-gradient-to-br from-background to-muted/50 rounded-lg">
+                  <div className="text-2xl font-bold text-chart-primary">{cleaningStats.totalRows}</div>
+                  <div className="text-sm text-muted-foreground">Total Rows</div>
+                </div>
+                <div className="text-center p-4 bg-gradient-to-br from-background to-muted/50 rounded-lg">
+                  <div className="text-2xl font-bold text-chart-warning">{cleaningStats.emptyRows}</div>
+                  <div className="text-sm text-muted-foreground">Empty Rows</div>
+                </div>
+                <div className="text-center p-4 bg-gradient-to-br from-background to-muted/50 rounded-lg">
+                  <div className="text-2xl font-bold text-chart-secondary">{cleaningStats.duplicateRows}</div>
+                  <div className="text-sm text-muted-foreground">Duplicates</div>
+                </div>
+                <div className="text-center p-4 bg-gradient-to-br from-background to-muted/50 rounded-lg">
+                  <div className="text-2xl font-bold text-chart-tertiary">{cleaningStats.missingValues}</div>
+                  <div className="text-sm text-muted-foreground">Missing Values</div>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-sm glass-card px-6 py-3 rounded-full hover:scale-105 transition-transform animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                <Brain className="h-5 w-5 text-chart-secondary" />
-                <span className="font-medium">AI Analytics</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm glass-card px-6 py-3 rounded-full hover:scale-105 transition-transform animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                <BarChart3 className="h-5 w-5 text-chart-tertiary" />
-                <span className="font-medium">Smart Visualizations</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm glass-card px-6 py-3 rounded-full hover:scale-105 transition-transform animate-slide-up" style={{ animationDelay: '0.3s' }}>
-                <Zap className="h-5 w-5 text-chart-warning" />
-                <span className="font-medium">Real-time OCR</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 pb-20">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-12">
-          <div className="flex justify-center">
-            <TabsList className="glass-card p-1 sm:p-2 h-12 sm:h-16 grid grid-cols-5 w-full max-w-4xl overflow-x-auto">
-              <TabsTrigger value="upload" className="flex items-center gap-1 sm:gap-3 text-xs sm:text-sm font-medium h-10 sm:h-12 rounded-lg transition-all duration-300 hover:scale-105 px-1 sm:px-3">
-                <FileText className="h-5 w-5" />
-                <span className="hidden sm:inline">Upload Data</span>
-                <span className="sm:hidden">Upload</span>
-              </TabsTrigger>
-              <TabsTrigger value="data" disabled={currentData.length === 0} className="flex items-center gap-1 sm:gap-3 text-xs sm:text-sm font-medium h-10 sm:h-12 rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 px-1 sm:px-3">
-                <BarChart3 className="h-5 w-5" />
-                <span className="hidden sm:inline">Analytics</span>
-                <span className="sm:hidden">Data</span>
-              </TabsTrigger>
-              <TabsTrigger value="clean" disabled={currentData.length === 0} className="flex items-center gap-1 sm:gap-3 text-xs sm:text-sm font-medium h-10 sm:h-12 rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 px-1 sm:px-3">
-                <Sparkles className="h-5 w-5" />
-                <span className="hidden sm:inline">Clean Data</span>
-                <span className="sm:hidden">Clean</span>
-              </TabsTrigger>
-              <TabsTrigger value="ai" disabled={currentData.length === 0} className="flex items-center gap-1 sm:gap-3 text-xs sm:text-sm font-medium h-10 sm:h-12 rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 px-1 sm:px-3">
-                <Brain className="h-5 w-5" />
-                <span className="hidden sm:inline">AI Assistant</span>
-                <span className="sm:hidden">AI</span>
-              </TabsTrigger>
-              <TabsTrigger value="ocr" className="flex items-center gap-1 sm:gap-3 text-xs sm:text-sm font-medium h-10 sm:h-12 rounded-lg transition-all duration-300 hover:scale-105 px-1 sm:px-3">
-                <Zap className="h-5 w-5" />
-                <span className="hidden sm:inline">Text Extract</span>
-                <span className="sm:hidden">OCR</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
+              <Separator />
 
-          <TabsContent value="upload" className="animate-slide-up">
-            <div className="floating-card">
-              <FileUpload 
-                onDataLoad={handleDataLoad}
-                onImageLoad={handleImageLoad}
-              />
-            </div>
-            
-            {/* Quick Stats */}
-            {currentData.length > 0 && (
-              <div className="mt-6 sm:mt-8 animate-scale-bounce">
-                <h3 className="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  Data Summary
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  Cleaning Options
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 stagger-animation">
-                  <div className="floating-card p-4 sm:p-8 text-center group">
-                    <div className="p-3 sm:p-4 rounded-full bg-gradient-to-r from-chart-primary/20 to-chart-primary/10 mx-auto w-fit mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-                      <BarChart3 className="h-10 w-10 text-chart-primary" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries({
+                    removeEmptyRows: 'Remove Empty Rows',
+                    trimWhitespace: 'Trim Whitespace',
+                    standardizeText: 'Standardize Text Spacing',
+                    removeDuplicates: 'Remove Duplicate Rows',
+                    handleMissingValues: 'Handle Missing Values',
+                    removeSpecialChars: 'Remove Special Characters'
+                  }).map(([key, label]) => (
+                    <div key={key} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                      <Checkbox
+                        id={key}
+                        checked={cleaningOptions[key as keyof typeof cleaningOptions]}
+                        onCheckedChange={(checked) =>
+                          setCleaningOptions(prev => ({ ...prev, [key]: checked }))
+                        }
+                      />
+                      <label htmlFor={key} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        {label}
+                      </label>
                     </div>
-                    <h4 className="font-semibold text-base sm:text-lg mb-2">Total Rows</h4>
-                    <p className="text-2xl sm:text-3xl font-bold text-chart-primary">{currentData.length.toLocaleString()}</p>
-                  </div>
-                  <div className="floating-card p-4 sm:p-8 text-center group">
-                    <div className="p-3 sm:p-4 rounded-full bg-gradient-to-r from-chart-secondary/20 to-chart-secondary/10 mx-auto w-fit mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-                      <FileText className="h-10 w-10 text-chart-secondary" />
-                    </div>
-                    <h4 className="font-semibold text-base sm:text-lg mb-2">Columns</h4>
-                    <p className="text-2xl sm:text-3xl font-bold text-chart-secondary">
-                      {currentData.length > 0 ? Object.keys(currentData[0]).length : 0}
-                    </p>
-                  </div>
-                  <div className="floating-card p-4 sm:p-8 text-center group">
-                    <div className="p-3 sm:p-4 rounded-full bg-gradient-to-r from-chart-tertiary/20 to-chart-tertiary/10 mx-auto w-fit mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-                      <Brain className="h-10 w-10 text-chart-tertiary" />
-                    </div>
-                    <h4 className="font-semibold text-base sm:text-lg mb-2">File Type</h4>
-                    <p className="text-2xl sm:text-3xl font-bold text-chart-tertiary">{currentFileType.toUpperCase()}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="data" className="animate-slide-up">
-            <div className="space-y-6">
-              <div className="floating-card">
-                <DataTable 
-                  data={currentData}
-                  filename={currentFilename}
-                  type={currentFileType}
-                />
-              </div>
-              
-            </div>
-          </TabsContent>
-
-          <TabsContent value="clean" className="animate-slide-up">
-            <DataCleaning 
-              data={currentData}
-              onDataCleaned={handleDataCleaned}
-            />
-          </TabsContent>
-
-          <TabsContent value="ai" className="animate-slide-up">
-            <div className="floating-card">
-              <AIChat 
-                data={currentData}
-                filename={currentFilename}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="ocr" className="animate-slide-up">
-            <div className="floating-card">
-              <ImageOCR 
-                imageFile={currentImage}
-                onTextExtracted={handleTextExtracted}
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        {/* Feature Highlights */}
-        {activeTab === 'upload' && currentData.length === 0 && (
-          <div className="mt-12 sm:mt-20">
-            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent px-4">
-              Powerful Features at Your Fingertips
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 stagger-animation px-4">
-              <div className="floating-card p-6 sm:p-10 text-center space-y-4 sm:space-y-6 group">
-                <div className="p-4 sm:p-6 rounded-full bg-gradient-to-r from-chart-primary to-chart-secondary mx-auto w-fit group-hover:scale-110 transition-all duration-300">
-                  <Brain className="h-12 w-12 text-primary-foreground" />
-                </div>
-                <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-xl sm:text-2xl font-semibold">AI-Powered Analysis</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    Get intelligent insights, pattern detection, and automated recommendations from your data with advanced machine learning algorithms.
-                  </p>
+                  ))}
                 </div>
               </div>
 
-              <div className="floating-card p-6 sm:p-10 text-center space-y-4 sm:space-y-6 group">
-                <div className="p-4 sm:p-6 rounded-full bg-gradient-to-r from-chart-secondary to-chart-tertiary mx-auto w-fit group-hover:scale-110 transition-all duration-300">
-                  <FileText className="h-12 w-12 text-primary-foreground" />
-                </div>
-                <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-xl sm:text-2xl font-semibold">Multi-Format Support</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    Work seamlessly with Excel, CSV, JSON files, and extract structured data from images using state-of-the-art OCR technology.
-                  </p>
-                </div>
+              <div className="flex justify-center pt-4">
+                <Button 
+                  onClick={cleanData}
+                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 px-8"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Clean Data
+                </Button>
               </div>
-
-              <div className="floating-card p-6 sm:p-10 text-center space-y-4 sm:space-y-6 group">
-                <div className="p-4 sm:p-6 rounded-full bg-gradient-to-r from-chart-tertiary to-chart-warning mx-auto w-fit group-hover:scale-110 transition-all duration-300">
-                  <BarChart3 className="h-12 w-12 text-primary-foreground" />
-                </div>
-                <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-xl sm:text-2xl font-semibold">Interactive Visualizations</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    Explore your data with dynamic charts, real-time filtering, and comprehensive analysis tools that adapt to your dataset.
-                  </p>
-                </div>
-              </div>
-
-              <div className="floating-card p-6 sm:p-10 text-center space-y-4 sm:space-y-6 group">
-                <div className="p-4 sm:p-6 rounded-full bg-gradient-to-r from-chart-warning to-chart-danger mx-auto w-fit group-hover:scale-110 transition-all duration-300">
-                  <Sparkles className="h-12 w-12 text-primary-foreground" />
-                </div>
-                <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-xl sm:text-2xl font-semibold">Smart Data Cleaning</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    Automatically detect and fix data quality issues, remove duplicates, and standardize formats for cleaner analysis.
-                  </p>
-                </div>
-              </div>
-
-              <div className="floating-card p-6 sm:p-10 text-center space-y-4 sm:space-y-6 group">
-                <div className="p-4 sm:p-6 rounded-full bg-gradient-to-r from-chart-danger to-chart-primary mx-auto w-fit group-hover:scale-110 transition-all duration-300">
-                  <Zap className="h-12 w-12 text-primary-foreground" />
-                </div>
-                <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-xl sm:text-2xl font-semibold">Real-time Processing</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    Process large datasets instantly with optimized algorithms and get immediate feedback on your data operations.
-                  </p>
-                </div>
-              </div>
-
-              <div className="floating-card p-6 sm:p-10 text-center space-y-4 sm:space-y-6 group">
-                <div className="p-4 sm:p-6 rounded-full bg-gradient-to-r from-chart-success to-chart-primary mx-auto w-fit group-hover:scale-110 transition-all duration-300">
-                  <TrendingUp className="h-12 w-12 text-primary-foreground" />
-                </div>
-                <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-xl sm:text-2xl font-semibold">Advanced Analytics</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    Perform statistical analysis, trend detection, and predictive modeling with enterprise-grade analytical capabilities.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
-
-export default Index;

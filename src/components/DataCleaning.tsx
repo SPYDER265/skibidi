@@ -162,10 +162,10 @@ export const DataCleaning = ({ data, onDataCleaned }: DataCleaningProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2 sm:px-0">
       <Card className="floating-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-3">
+          <CardTitle className="flex items-center gap-3 text-lg sm:text-2xl">
             <Sparkles className="h-6 w-6 text-chart-primary" />
             Data Quality Analysis
           </CardTitle>
@@ -196,19 +196,19 @@ export const DataCleaning = ({ data, onDataCleaned }: DataCleaningProps) => {
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-gradient-to-br from-background to-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-chart-primary">{cleaningStats.totalRows}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-chart-primary">{cleaningStats.totalRows}</div>
                   <div className="text-sm text-muted-foreground">Total Rows</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-background to-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-chart-warning">{cleaningStats.emptyRows}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-chart-warning">{cleaningStats.emptyRows}</div>
                   <div className="text-sm text-muted-foreground">Empty Rows</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-background to-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-chart-secondary">{cleaningStats.duplicateRows}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-chart-secondary">{cleaningStats.duplicateRows}</div>
                   <div className="text-sm text-muted-foreground">Duplicates</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-background to-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-chart-tertiary">{cleaningStats.missingValues}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-chart-tertiary">{cleaningStats.missingValues}</div>
                   <div className="text-sm text-muted-foreground">Missing Values</div>
                 </div>
               </div>
@@ -216,11 +216,11 @@ export const DataCleaning = ({ data, onDataCleaned }: DataCleaningProps) => {
               <Separator />
 
               <div>
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   Cleaning Options
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4">
                   {Object.entries({
                     removeEmptyRows: 'Remove Empty Rows',
                     trimWhitespace: 'Trim Whitespace',
@@ -228,7 +228,7 @@ export const DataCleaning = ({ data, onDataCleaned }: DataCleaningProps) => {
                     removeDuplicates: 'Remove Duplicate Rows',
                     handleMissingValues: 'Handle Missing Values',
                     removeSpecialChars: 'Remove Special Characters'
-                  }).map(([key, label]) => (
+                  }).map(([key, label], index) => (
                     <div key={key} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
                       <Checkbox
                         id={key}
@@ -237,7 +237,7 @@ export const DataCleaning = ({ data, onDataCleaned }: DataCleaningProps) => {
                           setCleaningOptions(prev => ({ ...prev, [key]: checked }))
                         }
                       />
-                      <label htmlFor={key} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      <label htmlFor={key} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
                         {label}
                       </label>
                     </div>

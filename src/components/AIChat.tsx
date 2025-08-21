@@ -181,8 +181,8 @@ What specific aspect would you like to explore further?`;
   }, [messages]);
 
   return (
-    <Card className="glass-card h-[500px] sm:h-[600px] flex flex-col animate-fade-in">
-      <div className="p-4 border-b border-border/50">
+    <Card className="glass-card h-[450px] sm:h-[600px] flex flex-col animate-fade-in">
+      <div className="p-3 sm:p-4 border-b border-border/50">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="p-2 rounded-full bg-gradient-to-r from-chart-primary to-chart-secondary">
             <Bot className="h-5 w-5 text-primary-foreground" />
@@ -200,7 +200,7 @@ What specific aspect would you like to explore further?`;
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1 p-3 sm:p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((message) => (
             <div
@@ -225,14 +225,14 @@ What specific aspect would you like to explore further?`;
                 </div>
                 
                 {message.suggestions && (
-                  <div className="mt-2 flex flex-wrap gap-1 sm:gap-2">
+                  <div className="mt-2 flex flex-wrap gap-1 sm:gap-2 max-w-full">
                     {message.suggestions.map((suggestion, index) => (
                       <Button
                         key={index}
                         variant="outline"
                         size="sm"
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className="text-xs"
+                        className="text-xs whitespace-nowrap"
                       >
                         {suggestion}
                       </Button>
@@ -275,7 +275,7 @@ What specific aspect would you like to explore further?`;
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask about patterns, outliers, cleaning suggestions..."
+            placeholder="Ask about your data..."
             disabled={isLoading}
             className="flex-1"
           />
@@ -288,18 +288,21 @@ What specific aspect would you like to explore further?`;
           </Button>
         </div>
         
-        <div className="flex gap-1 sm:gap-2 mt-2 sm:mt-3 flex-wrap">
+        <div className="flex gap-1 sm:gap-2 mt-2 sm:mt-3 flex-wrap justify-center sm:justify-start">
           <Button variant="glass" size="sm" onClick={() => handleSuggestionClick("Summarize this dataset")}>
             <BarChart3 className="h-3 w-3 mr-1" />
-            Summary
+            <span className="hidden sm:inline">Summary</span>
+            <span className="sm:hidden text-xs">Sum</span>
           </Button>
           <Button variant="glass" size="sm" onClick={() => handleSuggestionClick("Check data quality")}>
             <TrendingUp className="h-3 w-3 mr-1" />
-            Quality Check
+            <span className="hidden sm:inline">Quality Check</span>
+            <span className="sm:hidden text-xs">Quality</span>
           </Button>
           <Button variant="glass" size="sm" onClick={() => handleSuggestionClick("Find correlations")}>
             <PieChart className="h-3 w-3 mr-1" />
-            Correlations
+            <span className="hidden sm:inline">Correlations</span>
+            <span className="sm:hidden text-xs">Corr</span>
           </Button>
         </div>
       </div>

@@ -159,11 +159,11 @@ export const ImageOCR = ({ imageFile, onTextExtracted }: ImageOCRProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="glass-card p-6 animate-fade-in">
+    <div className="space-y-6 px-2 sm:px-0">
+      <Card className="glass-card p-4 sm:p-6 animate-fade-in">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
               <FileText className="h-5 w-5 text-chart-primary" />
               Image to Text Conversion
             </h3>
@@ -205,7 +205,7 @@ export const ImageOCR = ({ imageFile, onTextExtracted }: ImageOCRProps) => {
       </Card>
 
       {extractedText && (
-        <Card className="glass-card p-6 animate-fade-in">
+        <Card className="glass-card p-4 sm:p-6 animate-fade-in">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold">Extracted Text</h4>
