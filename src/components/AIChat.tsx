@@ -181,17 +181,17 @@ What specific aspect would you like to explore further?`;
   }, [messages]);
 
   return (
-    <Card className="glass-card h-[600px] flex flex-col animate-fade-in">
+    <Card className="glass-card h-[500px] sm:h-[600px] flex flex-col animate-fade-in">
       <div className="p-4 border-b border-border/50">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="p-2 rounded-full bg-gradient-to-r from-chart-primary to-chart-secondary">
             <Bot className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h3 className="font-semibold">AI Analytics Assistant</h3>
-            <p className="text-sm text-muted-foreground">Ask me anything about your data</p>
+            <h3 className="text-sm sm:text-base font-semibold">AI Analytics Assistant</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground">Ask me anything about your data</p>
           </div>
-          <div className="ml-auto flex gap-1">
+          <div className="ml-auto flex gap-1 hidden sm:flex">
             <Badge variant="secondary">
               <Sparkles className="h-3 w-3 mr-1" />
               Smart Analysis
@@ -205,7 +205,7 @@ What specific aspect would you like to explore further?`;
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex gap-2 sm:gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {message.type === 'bot' && (
                 <div className="p-2 rounded-full bg-gradient-to-r from-chart-primary to-chart-secondary mt-1">
@@ -213,9 +213,9 @@ What specific aspect would you like to explore further?`;
                 </div>
               )}
               
-              <div className={`max-w-[80%] ${message.type === 'user' ? 'order-first' : ''}`}>
+              <div className={`max-w-[85%] sm:max-w-[80%] ${message.type === 'user' ? 'order-first' : ''}`}>
                 <div
-                  className={`p-3 rounded-lg ${
+                  className={`p-2 sm:p-3 rounded-lg text-sm sm:text-base ${
                     message.type === 'user'
                       ? 'bg-primary text-primary-foreground ml-auto'
                       : 'glass-card'
@@ -225,7 +225,7 @@ What specific aspect would you like to explore further?`;
                 </div>
                 
                 {message.suggestions && (
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-1 sm:gap-2">
                     {message.suggestions.map((suggestion, index) => (
                       <Button
                         key={index}
@@ -240,7 +240,7 @@ What specific aspect would you like to explore further?`;
                   </div>
                 )}
                 
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
                   {message.timestamp.toLocaleTimeString()}
                 </p>
               </div>
@@ -254,7 +254,7 @@ What specific aspect would you like to explore further?`;
           ))}
           
           {isLoading && (
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <div className="p-2 rounded-full bg-gradient-to-r from-chart-primary to-chart-secondary mt-1">
                 <Bot className="h-4 w-4 text-primary-foreground" />
               </div>
@@ -269,7 +269,7 @@ What specific aspect would you like to explore further?`;
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t border-border/50">
+      <div className="p-3 sm:p-4 border-t border-border/50">
         <div className="flex gap-2">
           <Input
             value={input}
@@ -288,7 +288,7 @@ What specific aspect would you like to explore further?`;
           </Button>
         </div>
         
-        <div className="flex gap-2 mt-3 flex-wrap">
+        <div className="flex gap-1 sm:gap-2 mt-2 sm:mt-3 flex-wrap">
           <Button variant="glass" size="sm" onClick={() => handleSuggestionClick("Summarize this dataset")}>
             <BarChart3 className="h-3 w-3 mr-1" />
             Summary

@@ -115,18 +115,18 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
   }, [handleFile]);
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           Upload Your Data
         </h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto px-4">
           Drag and drop your files or click to browse. We support multiple formats including CSV, Excel, JSON, and images for OCR analysis.
         </p>
       </div>
       
       <div
-        className={`relative border-2 border-dashed rounded-2xl p-16 text-center transition-all duration-500 overflow-hidden ${
+        className={`relative border-2 border-dashed rounded-2xl p-8 sm:p-16 text-center transition-all duration-500 overflow-hidden ${
           dragActive 
             ? 'border-primary bg-gradient-to-br from-primary/20 to-accent/10 scale-105 glow-effect' 
             : 'border-border/30 hover:border-primary/50 hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5'
@@ -139,8 +139,8 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
         {/* Background decoration */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-50" />
         
-        <div className="relative flex flex-col items-center gap-8">
-          <div className={`relative p-6 rounded-full bg-gradient-to-r from-chart-primary to-chart-secondary transition-transform duration-300 ${dragActive ? 'scale-110 animate-bounce-gentle' : 'hover:scale-105'}`}>
+        <div className="relative flex flex-col items-center gap-4 sm:gap-8">
+          <div className={`relative p-4 sm:p-6 rounded-full bg-gradient-to-r from-chart-primary to-chart-secondary transition-transform duration-300 ${dragActive ? 'scale-110 animate-bounce-gentle' : 'hover:scale-105'}`}>
             <Upload className="h-12 w-12 text-primary-foreground" />
             {dragActive && (
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-chart-primary to-chart-secondary animate-ping opacity-75" />
@@ -148,10 +148,10 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
           </div>
           
           <div className="space-y-4">
-            <h3 className="text-2xl font-semibold">
+            <h3 className="text-xl sm:text-2xl font-semibold">
               {dragActive ? 'Release to upload!' : 'Drop your data files here'}
             </h3>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-base sm:text-lg">
               {dragActive 
                 ? 'Let go to start processing your file' 
                 : 'Support for CSV, Excel, JSON, and image files with OCR'
@@ -159,27 +159,27 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-lg">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 max-w-lg w-full">
             <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
               <FileText className="h-8 w-8 text-primary" />
-              <span className="text-sm font-medium">CSV/Excel</span>
+              <span className="text-xs sm:text-sm font-medium">CSV/Excel</span>
             </div>
             <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/20">
               <BarChart3 className="h-8 w-8 text-accent" />
-              <span className="text-sm font-medium">JSON</span>
+              <span className="text-xs sm:text-sm font-medium">JSON</span>
             </div>
-            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-chart-secondary/10 to-chart-secondary/5 border border-chart-secondary/20 md:col-span-1 col-span-2">
+            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-chart-secondary/10 to-chart-secondary/5 border border-chart-secondary/20 sm:col-span-1 col-span-2 sm:col-span-1">
               <Image className="h-8 w-8 text-chart-secondary" />
-              <span className="text-sm font-medium">Images + OCR</span>
+              <span className="text-xs sm:text-sm font-medium">Images + OCR</span>
             </div>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-md">
             <Button 
               variant="analytics" 
               size="lg" 
               disabled={isProcessing}
-              className={`transition-all duration-300 ${isProcessing ? 'animate-pulse' : 'hover:scale-105'}`}
+              className={`transition-all duration-300 w-full sm:w-auto ${isProcessing ? 'animate-pulse' : 'hover:scale-105'}`}
               onClick={() => document.getElementById('file-upload')?.click()}
             >
               {isProcessing ? (
@@ -194,7 +194,7 @@ export const FileUpload = ({ onDataLoad, onImageLoad }: FileUploadProps) => {
                 </>
               )}
             </Button>
-            <Button variant="glass" size="lg" className="hover:scale-105 transition-transform">
+            <Button variant="glass" size="lg" className="hover:scale-105 transition-transform w-full sm:w-auto">
               <span className="mr-2">👁️</span>
               View Samples
             </Button>

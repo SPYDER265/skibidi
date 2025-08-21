@@ -135,19 +135,19 @@ export const DataTable = ({ data, filename, type }: DataTableProps) => {
   }
 
   return (
-    <Card className="glass-card p-6 space-y-6 animate-fade-in">
-      <div className="flex items-start justify-between gap-4">
+    <Card className="glass-card p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <h3 className="text-xl font-semibold flex items-center gap-2">
+          <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-chart-primary" />
             <span className="truncate">{filename}</span>
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {data.length} rows, {columns.length} columns • Type: {type.toUpperCase()}
           </p>
         </div>
         
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
           <Button variant="glass" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Export</span>
@@ -155,7 +155,7 @@ export const DataTable = ({ data, filename, type }: DataTableProps) => {
         </div>
       </div>
 
-      <div className="flex gap-4 items-center">
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -180,7 +180,7 @@ export const DataTable = ({ data, filename, type }: DataTableProps) => {
         </Select>
       </div>
 
-      <div className="rounded-lg border border-border/50 overflow-hidden">
+      <div className="rounded-lg border border-border/50 overflow-hidden overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -191,7 +191,7 @@ export const DataTable = ({ data, filename, type }: DataTableProps) => {
                 return (
                   <TableHead 
                     key={column}
-                    className="cursor-pointer hover:bg-muted/70 transition-colors p-4"
+                    className="cursor-pointer hover:bg-muted/70 transition-colors p-2 sm:p-4 min-w-[120px]"
                     onClick={() => {
                       if (sortColumn === column) {
                         setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -202,7 +202,7 @@ export const DataTable = ({ data, filename, type }: DataTableProps) => {
                     }}
                   >
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <span className="font-medium">{column}</span>
                         <div className="flex gap-1">
                           <Badge variant="secondary" className="text-xs">
@@ -215,7 +215,7 @@ export const DataTable = ({ data, filename, type }: DataTableProps) => {
                           )}
                         </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground whitespace-nowrap">
                         {stats.completion}% filled • {stats.unique} unique
                       </div>
                     </div>
@@ -228,7 +228,7 @@ export const DataTable = ({ data, filename, type }: DataTableProps) => {
             {paginatedData.map((row, index) => (
               <TableRow key={index} className="hover:bg-muted/30">
                 {columns.map(column => (
-                  <TableCell key={column} className="p-4">
+                  <TableCell key={column} className="p-2 sm:p-4">
                     <div className="max-w-xs truncate">
                       {row[column] ?? <span className="text-muted-foreground">—</span>}
                     </div>
@@ -241,8 +241,8 @@ export const DataTable = ({ data, filename, type }: DataTableProps) => {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
             Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, sortedData.length)} of {sortedData.length} results
           </p>
           
@@ -256,7 +256,7 @@ export const DataTable = ({ data, filename, type }: DataTableProps) => {
               Previous
             </Button>
             
-            <div className="flex gap-1">
+            <div className="flex gap-1 overflow-x-auto max-w-[200px] sm:max-w-none">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const page = i + 1;
                 return (
