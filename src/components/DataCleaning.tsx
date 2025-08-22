@@ -20,12 +20,159 @@ export const DataCleaning = ({ data, onDataCleaned }: DataCleaningProps) => {
     removeSpecialChars: false,
     standardizeText: true,
     removeDuplicates: true,
-    handleMissingValues: true
+    handleMissingValues: true,
+    smartOrganization: false
   });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [cleaningStats, setCleaningStats] = useState<any>(null);
   const { toast } = useToast();
 
+  // Helper functions for Smart Organization
+  const detectMoney = (value: string): { isMoney: boolean; amount: number | null; currency: string } => {
+    if (typeof value !== 'string') return { isMoney: false, amount: null, currency: '' };
+    
+    const moneyRegex = /[\$₦€£¥₹₽¢₩₪₫₡₨₵₴₸₲₱₦₹₽]/;
+    const cleanValue = value.trim();
+    
+    if (moneyRegex.test(cleanValue)) {
+      const currency = cleanValue.match(moneyRegex)?.[0] || '';
+      const numericPart = cleanValue.replace(/[^\d.,]/g, '').replace(/,/g, '');
+      const amount = parseFloat(numericPart);
+      
+      return {
+        isMoney: !isNaN(amount),
+        amount: !isNaN(amount) ? amount : null,
+        currency
+      };
+    }
+    
+    return { isMoney: false, amount: null, currency: '' };
+  };
+
+  const detectDate = (value: string): { isDate: boolean; standardDate: string | null } => {
+    if (typeof value !== 'string') return { isDate: false, standardDate: null };
+    
+    const cleanValue = value.trim();
+    
+    // Try various date formats
+    const dateFormats = [
+      /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
+      /^\d{2}\/\d{2}\/\d{4}$/, // MM/DD/YYYY
+      /^\d{2}-\d{2}-\d{4}$/, // MM-DD-YYYY
+      /^\d{4}\/\d{2}\/\d{2}$/, // YYYY/MM/DD
+      /^\d{1,2}\/\d{1,2}\/\d{4}$/, // M/D/YYYY
+      /^\d{1,2}-\d{1,2}-\d{4}$/, // M-D-YYYY
+    ];
+    
+    const isDateFormat = dateFormats.some(format => format.test(cleanValue));
+    
+    if (isDateFormat || !isNaN(Date.parse(cleanValue))) {
+      const date = new Date(cleanValue);
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return {
+          isDate: true,
+          standardDate: `${year}-${month}-${day}`
+        };
+      }
+    }
+    
+    return { isDate: false, standardDate: null };
+  };
+
+  const detectNumeric = (value: string): { isNumeric: boolean; numericValue: number | null } => {
+    if (typeof value !== 'string') return { isNumeric: false, numericValue: null };
+    
+    const cleanValue = value.trim().replace(/,/g, '');
+    
+    // Check if it's a pure number (not money or date)
+    if (/^-?\d*\.?\d+$/.test(cleanValue)) {
+      const num = parseFloat(cleanValue);
+      return {
+        isNumeric: !isNaN(num),
+        numericValue: !isNaN(num) ? num : null
+      };
+    }
+    
+    return { isNumeric: false, numericValue: null };
+  };
+
+  const applySmartOrganization = (data: any[]): any[] => {
+    if (data.length === 0) return data;
+    
+    const organizedData: any[] = [];
+    const moneyValues: any[] = [];
+    const dateValues: any[] = [];
+    const numericColumns: { [key: string]: any[] } = {};
+    
+    data.forEach((row, rowIndex) => {
+      const newRow: any = {};
+      let hasMoneyInRow = false;
+      let hasDateInRow = false;
+      
+      // First pass: identify and extract special values
+      Object.keys(row).forEach(key => {
+        const value = row[key];
+        const stringValue = String(value || '').trim();
+        
+        if (!stringValue) {
+          newRow[key] = value;
+          return;
+        }
+        
+        // Check for money
+        const moneyCheck = detectMoney(stringValue);
+        if (moneyCheck.isMoney && moneyCheck.amount !== null) {
+          if (!hasMoneyInRow) {
+            newRow['Money'] = `${moneyCheck.currency}${moneyCheck.amount}`;
+            hasMoneyInRow = true;
+          }
+          // Remove from original column or mark as processed
+          newRow[key] = '';
+          return;
+        }
+        
+        // Check for dates
+        const dateCheck = detectDate(stringValue);
+        if (dateCheck.isDate && dateCheck.standardDate) {
+          if (!hasDateInRow) {
+            newRow['Date'] = dateCheck.standardDate;
+            hasDateInRow = true;
+          }
+          // Remove from original column or mark as processed
+          newRow[key] = '';
+          return;
+        }
+        
+        // Check for numeric values
+        const numericCheck = detectNumeric(stringValue);
+        if (numericCheck.isNumeric && numericCheck.numericValue !== null) {
+          newRow[key] = numericCheck.numericValue;
+          return;
+        }
+        
+        // Keep as text
+        newRow[key] = value;
+      });
+      
+      organizedData.push(newRow);
+    });
+    
+    // Clean up empty columns
+    const finalData = organizedData.map(row => {
+      const cleanedRow: any = {};
+      Object.keys(row).forEach(key => {
+        if (row[key] !== '' && row[key] !== null && row[key] !== undefined) {
+          cleanedRow[key] = row[key];
+        }
+      });
+      return cleanedRow;
+    });
+    
+    return finalData;
+  };
   const analyzeDataQuality = () => {
     setIsAnalyzing(true);
     
@@ -152,6 +299,21 @@ export const DataCleaning = ({ data, onDataCleaned }: DataCleaningProps) => {
       }
     }
 
+    // Apply Smart Organization if selected
+    if (cleaningOptions.smartOrganization) {
+      const beforeColumns = Object.keys(cleaned[0] || {}).length;
+      cleaned = applySmartOrganization(cleaned);
+      const afterColumns = Object.keys(cleaned[0] || {}).length;
+      
+      operationsPerformed.push(`Applied smart organization - restructured data with ${afterColumns} columns`);
+      
+      // Count organized values
+      const moneyCount = cleaned.filter(row => row['Money']).length;
+      const dateCount = cleaned.filter(row => row['Date']).length;
+      
+      if (moneyCount > 0) operationsPerformed.push(`Organized ${moneyCount} money values`);
+      if (dateCount > 0) operationsPerformed.push(`Standardized ${dateCount} date values`);
+    }
     onDataCleaned(cleaned);
     toast({
       title: "Data Cleaned Successfully!",
@@ -227,7 +389,8 @@ export const DataCleaning = ({ data, onDataCleaned }: DataCleaningProps) => {
                     standardizeText: 'Standardize Text Spacing',
                     removeDuplicates: 'Remove Duplicate Rows',
                     handleMissingValues: 'Handle Missing Values',
-                    removeSpecialChars: 'Remove Special Characters'
+                    removeSpecialChars: 'Remove Special Characters',
+                    smartOrganization: 'Smart Organization (Money, Dates, Numbers)'
                   }).map(([key, label], index) => (
                     <div key={key} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
                       <Checkbox
@@ -239,6 +402,11 @@ export const DataCleaning = ({ data, onDataCleaned }: DataCleaningProps) => {
                       />
                       <label htmlFor={key} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
                         {label}
+                        {key === 'smartOrganization' && (
+                          <span className="block text-xs text-muted-foreground mt-1">
+                            Automatically detects and organizes money ($, €, £), dates (YYYY-MM-DD), and numeric values into proper columns
+                          </span>
+                        )}
                       </label>
                     </div>
                   ))}
